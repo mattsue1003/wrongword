@@ -57,8 +57,8 @@
         .pdf-btn { background: #ea580c; }
 
         /* --- 響應式 A4 預覽區 --- */
-        .preview-area { width: 100%; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; }
-        .sheet-scaler { transform-origin: top center; margin-bottom: 15px; }
+        .preview-area { width: 100%; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; box-sizing: border-box; }
+        .sheet-scaler { margin-bottom: 15px; } /* 寬高由 JS 精準控制，避免手機版跑版 */
 
         .sheet {
             background: white; 
@@ -173,8 +173,8 @@
         @media print {
             .no-print { display: none; }
             body { background: white; }
-            .sheet-scaler { transform: none !important; height: auto !important; margin: 0; }
-            .sheet { box-shadow: none; page-break-after: always; }
+            .sheet-scaler { transform: none !important; width: auto !important; height: auto !important; margin: 0; }
+            .sheet { box-shadow: none; page-break-after: always; transform: none !important; }
         }
     </style>
 </head>
@@ -394,15 +394,29 @@
     }
 
     function updateScale() {
-        const containerWidth = document.querySelector('.preview-area').clientWidth - 40;
+        const previewArea = document.querySelector('.preview-area');
+        const containerWidth = previewArea.clientWidth - 40; // 左右保留安全邊距
         const scalers = document.querySelectorAll('.sheet-scaler');
         if (scalers.length === 0) return;
-        const sheetWidth = 210 * 3.7795;
+        
+        // A4 尺寸 (96 DPI 基準)
+        const sheetWidth = 210 * 3.7795; 
+        const sheetHeight = 297 * 3.7795;
+        
         let scale = containerWidth / sheetWidth;
-        if (scale > 1) scale = 1;
+        if (scale > 1) scale = 1; // 最大不超過 100%
+        
         scalers.forEach(s => {
-            s.style.transform = `scale(${scale})`;
-            s.style.height = (297 * 3.7795 * scale) + "px";
+            // 強制設定外層容器尺寸，避免手機版橫向撐開
+            s.style.width = (sheetWidth * scale) + "px";
+            s.style.height = (sheetHeight * scale) + "px";
+            
+            // 縮放內層實際的 A4 畫面
+            const sheet = s.querySelector('.sheet');
+            if(sheet) {
+                sheet.style.transform = `scale(${scale})`;
+                sheet.style.transformOrigin = 'top left';
+            }
         });
     }
 
