@@ -64,9 +64,9 @@
 
         .sheet {
             background: white; 
-            width: 210mm; 
-            height: 297mm; 
-            padding: 12mm 15mm; 
+            width: 794px; /* 將 mm 改為固定 px (210mm = 794px)，避免手機瀏覽器對物理單位解析誤差 */
+            height: 1123px; /* 將 mm 改為固定 px (297mm = 1123px) */
+            padding: 45px 56px; /* 等比例替換 12mm 15mm */
             box-sizing: border-box; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
             display: flex; 
@@ -93,7 +93,7 @@
         .vocab-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 22px 15px;
+            gap: 16px 12px; /* 稍微縮小間距，確保有足夠的彈性空間不被裁切 */
             flex-grow: 1;
             align-content: start;
         }
@@ -102,11 +102,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28pt;
+            font-size: 26pt; /* 稍微下修，防止部分手機字體渲染過大 */
+            line-height: 1.2; /* 強制設定行高，避免手機自動撐開高度 */
             font-family: "DFKai-SB", "BiauKai", "標楷體", serif;
             font-weight: bold;
             color: #1e293b;
-            padding: 12px;
+            padding: 10px;
             border: 2px dashed #cbd5e1;
             border-radius: 12px;
             background: #f8fafc;
@@ -170,7 +171,7 @@
             margin-top: auto; padding-top: 10px; border-top: 1px solid #e2e8f0;
         }
 
-        #hidden-capture { position: fixed; left: -5000px; width: 210mm; }
+        #hidden-capture { position: fixed; left: -5000px; width: 794px; } /* 同步改為固定 px */
 
         @media print {
             .no-print { display: none; }
@@ -402,20 +403,20 @@
         const scalers = document.querySelectorAll('.sheet-scaler');
         if (scalers.length === 0) return;
         
+        // 改用絕對固定的 A4 像素比例，杜絕所有手機版動態抓取錯誤的可能
+        const sheetWidth = 794; 
+        const sheetHeight = 1123;
+        
+        let scale = containerWidth / sheetWidth;
+        if (scale > 1) scale = 1; // 最大不超過 100%
+        
         scalers.forEach(s => {
+            // 強制設定外層容器尺寸，保護手機版縱向與橫向完整呈現
+            s.style.width = (sheetWidth * scale) + "px";
+            s.style.height = (sheetHeight * scale) + "px";
+            
             const sheet = s.querySelector('.sheet');
             if(sheet) {
-                // 關鍵修復：動態取得當下手機瀏覽器對 A4 渲染的實際寬高像素，避免手動相乘造成的計算誤差
-                const sheetWidth = sheet.offsetWidth; 
-                const sheetHeight = sheet.offsetHeight;
-                
-                let scale = containerWidth / sheetWidth;
-                if (scale > 1) scale = 1; // 最大不超過 100%
-                
-                // 強制設定外層容器尺寸，保護手機版縱向與橫向完整呈現
-                s.style.width = (sheetWidth * scale) + "px";
-                s.style.height = (sheetHeight * scale) + "px";
-                
                 // 縮放內層實際的 A4 畫面
                 sheet.style.transform = `scale(${scale})`;
                 sheet.style.transformOrigin = 'top left';
