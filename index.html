@@ -17,12 +17,14 @@
             --accent-color: #38bdf8;
         }
 
-        body { 
+        html, body { 
             font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; 
             background: var(--bg-color); 
             margin: 0; 
             padding: 0;
             color: #334155;
+            -webkit-text-size-adjust: 100%; /* 關鍵修復：防止手機瀏覽器自動放大字體導致跑版被裁切 */
+            text-size-adjust: 100%;
         }
         
         .top-banner { background: var(--primary-color); height: 5px; width: 100%; }
@@ -395,25 +397,26 @@
 
     function updateScale() {
         const previewArea = document.querySelector('.preview-area');
+        if (!previewArea) return;
         const containerWidth = previewArea.clientWidth - 40; // 左右保留安全邊距
         const scalers = document.querySelectorAll('.sheet-scaler');
         if (scalers.length === 0) return;
         
-        // A4 尺寸 (96 DPI 基準)
-        const sheetWidth = 210 * 3.7795; 
-        const sheetHeight = 297 * 3.7795;
-        
-        let scale = containerWidth / sheetWidth;
-        if (scale > 1) scale = 1; // 最大不超過 100%
-        
         scalers.forEach(s => {
-            // 強制設定外層容器尺寸，避免手機版橫向撐開
-            s.style.width = (sheetWidth * scale) + "px";
-            s.style.height = (sheetHeight * scale) + "px";
-            
-            // 縮放內層實際的 A4 畫面
             const sheet = s.querySelector('.sheet');
             if(sheet) {
+                // 關鍵修復：動態取得當下手機瀏覽器對 A4 渲染的實際寬高像素，避免手動相乘造成的計算誤差
+                const sheetWidth = sheet.offsetWidth; 
+                const sheetHeight = sheet.offsetHeight;
+                
+                let scale = containerWidth / sheetWidth;
+                if (scale > 1) scale = 1; // 最大不超過 100%
+                
+                // 強制設定外層容器尺寸，保護手機版縱向與橫向完整呈現
+                s.style.width = (sheetWidth * scale) + "px";
+                s.style.height = (sheetHeight * scale) + "px";
+                
+                // 縮放內層實際的 A4 畫面
                 sheet.style.transform = `scale(${scale})`;
                 sheet.style.transformOrigin = 'top left';
             }
